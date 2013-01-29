@@ -1,8 +1,8 @@
 import os
 
-from .constants import FORGE_ROOT, RELEASES_ROOT
+from .constants import FORGE_HOME, FORGE_ROOT, RELEASES_URL
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 DB_ROOT = os.path.join(FORGE_ROOT, 'db')
@@ -18,13 +18,13 @@ SITE_ID = 1
 TIME_ZONE = 'America/Los_Angeles'
 
 MEDIA_ROOT = os.path.join(FORGE_ROOT, 'releases')
-MEDIA_URL = RELEASES_ROOT
+MEDIA_URL = RELEASES_URL
 STATIC_URL = '/static/'
 
 ROOT_URLCONF = 'forge.urls'
 
 TEMPLATE_DIRS = (
-    os.path.join(FORGE_ROOT, 'templates'),
+    os.path.join(FORGE_HOME, 'templates'),
 )
 
 INSTALLED_APPS = (
