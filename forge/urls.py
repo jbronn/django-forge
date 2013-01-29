@@ -8,6 +8,9 @@ from . import views
 
 admin.autodiscover()
 
+handler404 = 'forge.views.handler404'
+handler500 = 'forge.views.handler500'
+
 urlpatterns = patterns('',
     (r'^admin/', include(admin.site.urls)),
     url(r'^modules\.json$', views.modules_json, name='modules_json'),

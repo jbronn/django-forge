@@ -95,7 +95,7 @@ class Command(BaseCommand):
                 version = release['version']
                 tarball = '%s-%s-%s.tar.gz' % (author_name, name, version)
                 upload_to = '/'.join([alpha, author_name, tarball])
-                relative = constants.RELEASES_ROOT + upload_to
+                relative = constants.RELEASES_URL + upload_to
                 tarball_url = options['url'] + relative
                 destination = os.path.join(settings.MEDIA_ROOT, upload_to)
 

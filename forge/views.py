@@ -1,4 +1,5 @@
 from django.http import Http404, HttpResponse
+from django.shortcuts import render
 from django.utils import simplejson
 
 from .models import Author, Module, Release
@@ -11,12 +12,25 @@ def json_response(data, indent=None, status=None):
 
 
 def error_response(errors, **kwargs):
-    key = kwargs.pop('key', 'errors')
     kwargs.setdefault('status', 400)
-    # Format errors as a list.
-    if key == 'errors' and isinstance(errors, basestring):
-        errors = [errors]
+    # The Puppet Forge sometimes returns it's errors in one of two ways,
+    # as a list:
+    #   {"errors": [ "<msg1>" ... "<msgN>" ]}
+    # Or as a single element:
+    #   {"error": "<msg>"}
+    if isinstance(errors, (list, tuple)):
+        key = 'errors'
+    else:
+        key = 'error'
     return json_response({key: errors}, **kwargs)
+
+
+def handler404(request):
+    return render(request, 'admin/404.html', {})
+
+
+def handler500(request):
+    return render(request, 'admin/500.html', {})
 
 
 def modules_json(request):
@@ -74,18 +88,16 @@ def releases_json(request):
 
     full_name = request.GET.get('module', None)
     if not full_name:
-        return error_response('Parameter module is required')
+        return error_response(['Parameter module is required'])
 
     parsed = Module.parse_full_name(full_name)
     if not parsed:
-        return error_response('Invalid module name')
+        return error_response(['Invalid module name'])
 
     try:
         module = Module.get_for_full_name(full_name)
     except Module.DoesNotExist:
-        return error_response('Module %s not found' % full_name,
-                              key='error',
-                              status=410)
+        return error_response('Module %s not found' % full_name, status=410)
 
     version = request.GET.get('version', None)
     if version:
@@ -93,8 +105,7 @@ def releases_json(request):
             mod_release = Release.objects.get(module=module, version=version)
         except Release.DoesNotExist:
             return error_response('Module %s has no release for version %s' %
-                                  (full_name, version),
-                                  key='error', status=410)
+                                  (full_name, version), status=410)
     else:
         mod_release = None
 
@@ -134,6 +145,6 @@ def releases_json(request):
             populate_dependencies(Module.get_for_full_name(full_name))
         except Module.DoesNotExist:
             err = 'Dependency module %s not found' % full_name
-            return error_response(err, status=410)
+            return error_response([err], status=410)
 
     return json_response(dependencies)
