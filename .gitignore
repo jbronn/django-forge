@@ -1,0 +1,4 @@
+dist/
+forge/*.db
+forge/settings_secret.py
+MANIFEST
