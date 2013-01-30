@@ -93,7 +93,7 @@ class Command(BaseCommand):
                         sys.stdout.write('  New: %s\n' % tags)
 
                     if desc != module.desc and verbosity >= 3:
-                        sys.stdout.write(' Descriptoins Differ:\n')
+                        sys.stdout.write(' Descriptions Differ:\n')
                         sys.stdout.write('  Old: %s\n' % module.desc)
                         sys.stdout.write('  New: %s\n' % desc)
 

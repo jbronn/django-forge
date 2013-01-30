@@ -69,15 +69,16 @@ class Release(models.Model):
     @property
     def metadata_json(self):
         with tarfile.open(self.tarball.path, mode='r:gz') as tf:
-            metadata_ti = tf.getmember(tf.getnames()[0])
-            try:
-                if not metadata_ti.isdir():
-                    raise Exception("Corrupt Release: %s" % self)
-                metadata_name = os.path.join(metadata_ti.name, 'metadata.json')
-                metadata = tf.extractfile(metadata_name).read()
-            except Exception:
-                # Corrupt tarballs happen -- just pretend we have no metadata.
-                return '{}'
+            metadata_ti = None
+            for fname in tf.getnames():
+                if os.path.basename(fname) == 'metadata.json':
+                    metadata_ti = tf.getmember(fname)
+                    break
+
+            if metadata_ti is None:
+                raise Exception("Can't find metadata.json for release: %s" % self)
+
+            metadata = tf.extractfile(metadata_ti.name).read()
 
         return metadata
 
