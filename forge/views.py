@@ -1,8 +1,8 @@
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import simplejson
 
-from .models import Author, Module, Release
+from .models import Module, Release
 
 
 def json_response(data, indent=None, status=None):
@@ -53,7 +53,7 @@ def modules_json(request):
             module_qs = (
                 Module.objects.filter(name__icontains=query) |
                 Module.objects.filter(author__name__icontains=query) |
-                Module.objects.filter(release__version__icontains=query) |
+                Module.objects.filter(releases__version__icontains=query) |
                 Module.objects.filter(tags__icontains=query) |
                 Module.objects.filter(desc__icontains=query)
             )
@@ -63,19 +63,18 @@ def modules_json(request):
 
     modules = []
     for module in module_qs.order_by('author__name').distinct():
-        # TODO: Store dates in database, don't rely on primary key order.
-        releases = Release.objects.filter(module=module).order_by('-pk')
-        latest = releases[0]
+        latest = module.latest_release
+        versions = [release.version for release in module.releases.all()]
+        versions.sort(reverse=True)
         metadata = latest.metadata
         modules.append({
             'name': module.name,
             'author': module.author.name,
-            'version': latest.version,
+            'version': str(latest.version),
             'full_name': str(module),
-            'desc': metadata.get('summary', ''),
+            'desc': module.desc,
             'project_url': metadata.get('project_page', ''),
-            'releases': [{'version': release.version}
-                         for release in releases],
+            'releases': [{'version': str(version)} for version in versions],
             'tag_list': module.tag_list,
         })
     return json_response(modules)
@@ -113,9 +112,10 @@ def releases_json(request):
     # room for improvement.
     dependencies = {}
     queue = set()
+
     def populate_dependencies(mod, release=None):
         if release is None:
-            release = Release.objects.filter(module=mod).order_by('-pk')[0]
+            release = mod.latest_release
 
         release_dependencies = [
             (depend['name'], depend['version_requirement'])
@@ -123,7 +123,7 @@ def releases_json(request):
         ]
         full_name = str(release.module)
         release_info = {
-            'version': release.version,
+            'version': str(release.version),
             'file': release.tarball.url,
             'dependencies': release_dependencies,
         }

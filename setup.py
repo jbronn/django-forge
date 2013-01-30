@@ -10,6 +10,7 @@ setup(name='django-forge',
       download_url='http://pypi.python.org/pypi/django-forge/',
       install_requires=[
         'Django>=1.4',
+        'semantic_version>=2.1.2',
       ],
       packages=['forge',
                 'forge/management',

@@ -1,10 +1,9 @@
 import os
-import re
 import tarfile
 
-from django.conf import settings
 from django.db import models
 from django.utils import simplejson
+from semantic_version.django_fields import VersionField
 
 from forge.constants import MODULE_REGEX
 
@@ -30,6 +29,9 @@ class Module(models.Model):
 
     @classmethod
     def parse_full_name(cls, full_name):
+        """
+        Return the module components given a full module name, or None.
+        """
         match = MODULE_REGEX.match(full_name)
         if match:
             return (match.group('author'), match.group('module'))
@@ -38,12 +40,26 @@ class Module(models.Model):
 
     @classmethod
     def get_for_full_name(cls, full_name):
+        """
+        Returns Module for the given full name, e.g., 'puppetlabs/stdlib'.
+        """
         parsed = Module.parse_full_name(full_name)
         if parsed:
             author, name = parsed
             return Module.objects.get(author__name=author, name=name)
         else:
             raise Module.DoesNotExist
+
+    @property
+    def latest_release(self):
+        """
+        Return the latest version that is not a pre-release.
+        """
+        releases = dict((release.version, release)
+                        for release in self.releases.all()
+                        if not release.version.prerelease)
+        latest_version = max(releases.keys())
+        return releases[latest_version]
 
     @property
     def tag_list(self):
@@ -56,8 +72,8 @@ def tarball_upload(instance, filename):
 
 
 class Release(models.Model):
-    module = models.ForeignKey(Module)
-    version = models.CharField(max_length=128, db_index=True)
+    module = models.ForeignKey(Module, related_name='releases')
+    version = VersionField(db_index=True)
     tarball = models.FileField(upload_to=tarball_upload)
 
     class Meta:
@@ -76,7 +92,8 @@ class Release(models.Model):
                     break
 
             if metadata_ti is None:
-                raise Exception("Can't find metadata.json for release: %s" % self)
+                raise Exception("Can't find metadata.json for release: %s" %
+                                self)
 
             metadata = tf.extractfile(metadata_ti.name).read()
 
