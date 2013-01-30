@@ -40,22 +40,23 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        verbosity = int(options['verbosity'])
         if options['quiet']:
-            options['verbosity'] = 0
+            verbosity = 0
 
         if options['modules_json']:
             with open(options['modules_json'], 'r') as json_h:
                 modules_raw = json_h.read()
         else:
-            if options['verbosity']:
-                sys.stdout.write('Downloading modules data from %s... ' %
+            if verbosity:
+                sys.stdout.write('Downloading modules.json from %s... ' %
                                   options['url'])
                 sys.stdout.flush()
             modules_url = options['url'] + constants.MODULES_JSON
             with contextlib.closing(urllib.urlopen(modules_url)) as json_h:
                 modules_raw = json_h.read()
-            if options['verbosity']:
-                sys.stdout.write(self.style.SQL_COLTYPE('Done') + '\n')
+            if verbosity:
+                sys.stdout.write('Done\n')
                 sys.stdout.flush()
         modules_data = simplejson.loads(modules_raw)
 
@@ -74,15 +75,28 @@ class Command(BaseCommand):
 
             # Creating Module.
             full_name = mod['full_name']
-            tags = ' '.join(mod['tag_list'])
+            tag_list = mod['tag_list']
+            tag_list.sort()
+            tags = ' '.join(tag_list)
             desc = mod['desc']
             module = modules.get(full_name, None)
             if module is None:
                 module, created = Module.objects.get_or_create(
                     author=author, name=name)
                 if tags != module.tags or desc != module.desc:
-                    if options['verbosity']:
+                    if verbosity:
                         sys.stdout.write('Updated Module: %s\n' % module)
+
+                    if tags != module.tags and verbosity >= 3:
+                        sys.stdout.write(' Tags Differ:\n')
+                        sys.stdout.write('  Old: %s\n' % module.tags)
+                        sys.stdout.write('  New: %s\n' % tags)
+
+                    if desc != module.desc and verbosity >= 3:
+                        sys.stdout.write(' Descriptoins Differ:\n')
+                        sys.stdout.write('  Old: %s\n' % module.desc)
+                        sys.stdout.write('  New: %s\n' % desc)
+
                     module.tags = tags
                     module.desc = desc
                     module.save()
@@ -102,7 +116,7 @@ class Command(BaseCommand):
                 dest_dir = os.path.dirname(destination)
                 if not os.path.isdir(dest_dir):
                     os.makedirs(dest_dir, mode=0755)
-                    if options['verbosity']:
+                    if verbosity:
                         sys.stdout.write('Created: %s\n' % dest_dir)
 
                 if not os.path.isfile(destination):
@@ -112,7 +126,7 @@ class Command(BaseCommand):
                     with open(destination, 'wb') as tb_h:
                         tb_h.write(tarball_data)
 
-                    if options['verbosity']:
+                    if verbosity:
                         sys.stdout.write('Downloaded: %s\n' %
                                          os.path.basename(destination))
 

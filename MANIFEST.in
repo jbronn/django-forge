@@ -1,3 +1,4 @@
+include LICENSE
 include README
 recursive-include forge/apache *
 recursive-include forge/templates *

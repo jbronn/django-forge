@@ -2,7 +2,7 @@ import os
 
 from .constants import FORGE_HOME, FORGE_ROOT, RELEASES_URL
 
-DEBUG = False
+DEBUG = bool(os.environ.get('FORGE_DEBUG', False))
 TEMPLATE_DEBUG = DEBUG
 
 DB_ROOT = os.path.join(FORGE_ROOT, 'db')
@@ -41,7 +41,8 @@ INSTALLED_APPS = (
 ## Hacks for simpler deployments.
 
 # Create DB_ROOT if it doesn't exist.
-if not os.path.isdir(DB_ROOT):
+if (DATABASES['default']['ENGINE'].endswith('sqlite3') and
+    not os.path.isdir(DB_ROOT)):
     os.makedirs(DB_ROOT, mode=0750)
 
 # Create MEDIA_ROOT (used to hold the module releases) if it doesn't exist.

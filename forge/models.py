@@ -6,8 +6,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import simplejson
 
-
-module_regex = re.compile(r'^(?P<author>\w+)[/\-](?P<module>\w+)$')
+from forge.constants import MODULE_REGEX
 
 
 class Author(models.Model):
@@ -31,7 +30,7 @@ class Module(models.Model):
 
     @classmethod
     def parse_full_name(cls, full_name):
-        match = module_regex.match(full_name)
+        match = MODULE_REGEX.match(full_name)
         if match:
             return (match.group('author'), match.group('module'))
         else:
