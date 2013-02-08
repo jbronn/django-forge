@@ -42,11 +42,11 @@ INSTALLED_APPS = (
 
 # Create DB_ROOT if it doesn't exist.
 if (DATABASES['default']['ENGINE'].endswith('sqlite3') and
-    not os.path.isdir(DB_ROOT)):
+    not (os.path.isdir(DB_ROOT) or os.path.islink(DB_ROOT))):
     os.makedirs(DB_ROOT, mode=0750)
 
 # Create MEDIA_ROOT (used to hold the module releases) if it doesn't exist.
-if not os.path.isdir(MEDIA_ROOT):
+if not (os.path.isdir(MEDIA_ROOT) or os.path.islink(MEDIA_ROOT)):
     os.makedirs(MEDIA_ROOT, mode=0750)
 
 # Not perfect, but prevents SECRET_KEY (generated the way Django does it)
