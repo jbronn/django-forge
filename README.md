@@ -18,8 +18,8 @@ mirror of Puppet Forge:
 Point your Puppet configuration file (`/etc/puppet.conf` or
 `~/.puppet/puppet.conf`) to the forge:
 
-   [main]
-       module_repository = http://localhost:8000
+    [main]
+        module_repository = http://localhost:8000
 
 You should now be able search and install with `puppet module`.
 
