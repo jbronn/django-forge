@@ -5,7 +5,8 @@ from django.db import models
 from django.utils import simplejson
 from semantic_version.django_fields import VersionField
 
-from forge.constants import MODULE_REGEX
+from .constants import MODULE_REGEX
+from .storage import ForgeStorage
 
 
 class Author(models.Model):
@@ -74,7 +75,8 @@ def tarball_upload(instance, filename):
 class Release(models.Model):
     module = models.ForeignKey(Module, related_name='releases')
     version = VersionField(db_index=True)
-    tarball = models.FileField(upload_to=tarball_upload)
+    tarball = models.FileField(upload_to=tarball_upload,
+                               storage=ForgeStorage())
 
     class Meta:
         unique_together = ('module', 'version')
