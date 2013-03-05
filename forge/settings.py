@@ -38,6 +38,8 @@ INSTALLED_APPS = (
     'forge',
 )
 
+ALLOWED_HOSTS = ['*',]
+
 ## Hacks for simpler deployments.
 
 # Create DB_ROOT if it doesn't exist.
