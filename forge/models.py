@@ -54,11 +54,19 @@ class Module(models.Model):
     @property
     def latest_release(self):
         """
-        Return the latest version that is not a pre-release.
+        Return the latest version, preferably one that isn't a pre-release.
         """
+        # First, try and get all non pre-release versions.
         releases = dict((release.version, release)
                         for release in self.releases.all()
                         if not release.version.prerelease)
+        if not releases:
+            # If all pre-releases, get all of them or return None.
+            releases = dict((release.version, release)
+                            for release in self.releases.all())
+            if not releases:
+                return None
+
         latest_version = max(releases.keys())
         return releases[latest_version]
 
