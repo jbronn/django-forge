@@ -13,6 +13,10 @@ from forge.models import Author, Module, Release
 
 
 class Command(BaseCommand):
+    help = (
+        'Mirrors the Puppet Forge.'
+    )
+
     option_list = BaseCommand.option_list + (
         make_option(
             '--url',
