@@ -33,11 +33,45 @@ def handler500(request):
     return render(request, 'admin/500.html', {})
 
 
+def module_dict(module):
+    """
+    Helper method to return a dictionary (for JSON generation) for the
+    given module.
+    """
+    latest = module.latest_release
+    versions = [release.version for release in module.releases.all()]
+    versions.sort(reverse=True)
+    metadata = latest.metadata
+    return {
+        'name': module.name,
+        'author': module.author.name,
+        'version': str(latest.version),
+        'full_name': str(module),
+        'desc': module.desc,
+        'project_url': metadata.get('project_page', ''),
+        'releases': [{'version': str(version)} for version in versions],
+        'tag_list': module.tag_list,
+    }
+
+
+def module_json(request, author, module_name):
+    """
+    Provides the `<author>/<module>.json` URL.
+
+    This hidden API is used by third parties, such as Puppet Librarian.
+    """
+    full_name = '%s/%s' % (author, module_name)
+    try:
+        module = Module.objects.get(author__name=author, name=module_name)
+    except Module.DoesNotExist:
+        return error_response('Module %s not found' % full_name, status=410)
+    return json_response(module_dict(module))
+
+
 def modules_json(request):
     """
     Provides the `/modules.json` URL expected by `puppet module`.
     """
-
     query = request.GET.get('q', None)
 
     if query:
@@ -63,20 +97,7 @@ def modules_json(request):
 
     modules = []
     for module in module_qs.order_by('author__name').distinct():
-        latest = module.latest_release
-        versions = [release.version for release in module.releases.all()]
-        versions.sort(reverse=True)
-        metadata = latest.metadata
-        modules.append({
-            'name': module.name,
-            'author': module.author.name,
-            'version': str(latest.version),
-            'full_name': str(module),
-            'desc': module.desc,
-            'project_url': metadata.get('project_page', ''),
-            'releases': [{'version': str(version)} for version in versions],
-            'tag_list': module.tag_list,
-        })
+        modules.append(module_dict(module))
     return json_response(modules)
 
 
@@ -84,7 +105,6 @@ def releases_json(request):
     """
     Provides the `/api/v1/releases.json` URL expected by `puppet module`.
     """
-
     full_name = request.GET.get('module', None)
     if not full_name:
         return error_response(['Parameter module is required'])

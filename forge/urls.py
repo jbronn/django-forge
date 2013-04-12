@@ -13,8 +13,12 @@ handler500 = 'forge.views.handler500'
 
 urlpatterns = patterns('',
     (r'^admin/', include(admin.site.urls)),
-    url(r'^modules\.json$', views.modules_json, name='modules_json'),
-    url(r'^api/v1/releases\.json$', views.releases_json, name='releases_json'),
+    url(r'^modules\.json$',
+        views.modules_json, name='modules_json'),
+    url(r'^api/v1/releases\.json$',
+        views.releases_json, name='releases_json'),
+    url(r'^(?P<author>\w+)/(?P<module_name>\w+)\.json$',
+        views.module_json, name='module_json'),
 )
 
 if settings.DEBUG:
