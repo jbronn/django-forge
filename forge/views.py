@@ -138,7 +138,7 @@ def releases_json(request):
             release = mod.latest_release
 
         release_dependencies = [
-            (depend['name'], depend['version_requirement'])
+            (depend['name'], depend.get('version_requirement', '>= 0.0.0'))
             for depend in release.metadata.get('dependencies', [])
         ]
         full_name = str(release.module)
