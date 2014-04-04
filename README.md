@@ -4,16 +4,15 @@ django-forge
 Quickstart
 ----------
 
-For those with short attention spans, the following creates a full
-mirror of Puppet Forge:
+For those with short attention spans, the following creates a full mirror of
+the Puppet Forge:
 
-    $ pip install Django
-    $ pip install semantic_version
-    $ git clone https://github.com/jbronn/django-forge
-    $ cd django-forge
-    $ ./manage.py syncdb --noinput
-    $ ./manage.py mirror_forge
-    $ FORGE_DEBUG=1 ./manage.py runserver
+    $ virtualenv forge
+    $ source forge/bin/activate
+    $ pip install django-forge
+    $ django-admin.py syncdb --noinput --settings=forge.settings
+    $ django-admin.py mirror_forge --settings=forge.settings
+    $ FORGE_DEBUG=1 django-admin.py runserver --settings=forge.settings
 
 Point your Puppet configuration file (`/etc/puppet.conf` or
 `~/.puppet/puppet.conf`) to the forge:
