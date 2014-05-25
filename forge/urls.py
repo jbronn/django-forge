@@ -1,10 +1,9 @@
 from django.conf import settings
-from django.conf.urls import patterns, include
-from django.conf.urls import url
+from django.conf.urls import patterns, include, url
 from django.contrib import admin
 
 from . import views
-
+from .views import v1
 
 admin.autodiscover()
 
@@ -14,11 +13,11 @@ handler500 = 'forge.views.handler500'
 urlpatterns = patterns('',
     (r'^admin/', include(admin.site.urls)),
     url(r'^modules\.json$',
-        views.modules_json, name='modules_json'),
+        v1.modules_json, name='modules_json_v1'),
     url(r'^api/v1/releases\.json$',
-        views.releases_json, name='releases_json'),
+        v1.releases_json, name='releases_json_v1'),
     url(r'^(?P<author>\w+)/(?P<module_name>\w+)\.json$',
-        views.module_json, name='module_json'),
+        v1.module_json, name='module_json_v1'),
 )
 
 if settings.DEBUG:
