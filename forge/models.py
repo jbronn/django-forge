@@ -1,8 +1,8 @@
+import json
 import os
 import tarfile
 
 from django.db import models
-from django.utils import simplejson
 from semantic_version.django_fields import VersionField
 
 from .constants import MODULE_REGEX
@@ -111,4 +111,4 @@ class Release(models.Model):
 
     @property
     def metadata(self):
-        return simplejson.loads(self.metadata_json)
+        return json.loads(self.metadata_json)

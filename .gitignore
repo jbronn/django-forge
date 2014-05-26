@@ -1,5 +1,5 @@
 dist/
 forge/*.db
-forge/settings_secret.py
+forge/settings/key.py
 MANIFEST
 *.pyc

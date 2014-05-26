@@ -10,9 +10,9 @@ the Puppet Forge:
     $ virtualenv forge
     $ source forge/bin/activate
     $ pip install django-forge
-    $ django-admin.py syncdb --noinput --settings=forge.settings
-    $ django-admin.py mirror_forge --settings=forge.settings
-    $ FORGE_DEBUG=1 django-admin.py runserver --settings=forge.settings
+    $ django-admin.py syncdb --noinput --settings=forge.settings.dev
+    $ django-admin.py mirror_forge --settings=forge.settings.dev
+    $ django-admin.py runserver --settings=forge.settings.dev
 
 Point your Puppet configuration file (`/etc/puppet.conf` or
 `~/.puppet/puppet.conf`) to the forge:
