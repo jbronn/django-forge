@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 from .json import error_response, json_response
-from ..dependency import module_dependencies
+from ..dependency import release_dependencies
 from ..models import Module, Release
 
 
@@ -98,9 +98,9 @@ def releases_json(request):
             return error_response('Module %s has no release for version %s' %
                                   (full_name, version), status=410)
     else:
-        release = None
+        release = module.latest_release
 
     try:
-        return json_response(module_dependencies(module, release))
+        return json_response(release_dependencies(release))
     except Exception as e:
         return error_response([e.message], status=410)
