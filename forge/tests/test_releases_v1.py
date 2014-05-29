@@ -5,13 +5,13 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 
 
-class TestReleasesResource(TestCase):
+class TestReleasesResourceV1(TestCase):
 
     def test_module_required(self):
         """
         Ensure the `module` GET parameter is required.
         """
-        response = self.client.get(reverse('releases_json'))
+        response = self.client.get(reverse('releases_json_v1'))
         self.assertEqual(response['Content-Type'], 'application/json')
         self.assertContains(response,
                             '["Parameter module is required"]',
@@ -24,7 +24,7 @@ class TestReleasesResource(TestCase):
         invalid_names = ('invalidmodule', '$!?')
         for invalid_name in invalid_names:
             response = self.client.get(
-                reverse('releases_json') + '?module=%s' % invalid_name
+                reverse('releases_json_v1') + '?module=%s' % invalid_name
             )
             self.assertEqual(response['Content-Type'], 'application/json')
             self.assertContains(response, '["Invalid module name"]',
@@ -36,7 +36,7 @@ class TestReleasesResource(TestCase):
         """
         fake_module = 'puppetlabs/fakemod'
         response = self.client.get(
-            reverse('releases_json') + '?module=%s' % fake_module
+            reverse('releases_json_v1') + '?module=%s' % fake_module
         )
         self.assertEqual(response['Content-Type'], 'application/json')
         self.assertContains(response, 'Module %s not found' % fake_module,
