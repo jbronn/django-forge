@@ -1,6 +1,7 @@
 import json
 import os
 import tarfile
+import warnings
 
 from django.db import models
 from semantic_version.django_fields import VersionField
@@ -9,27 +10,40 @@ from .constants import MODULE_REGEX
 from .storage import ForgeStorage
 
 
+class AuthorManager(models.Manager):
+    def get_by_natural_key(self, name):
+        return self.get(name=name)
+
+
 class Author(models.Model):
     name = models.CharField(max_length=64, unique=True)
+
+    objects = AuthorManager()
 
     def __unicode__(self):
         return self.name
 
+    def natural_key(self):
+        return (self.name,)
 
-class Module(models.Model):
-    author = models.ForeignKey(Author)
-    name = models.CharField(max_length=128, db_index=True)
-    desc = models.TextField(db_index=True, blank=True)
-    tags = models.TextField(db_index=True, blank=True)
 
-    class Meta:
-        unique_together = ('author', 'name')
+class ModuleManager(models.Manager):
+    def get_by_natural_key(self, author, name):
+        return self.get(author=Author.objects.get_by_natural_key(author),
+                        name=name)
 
-    def __unicode__(self):
-        return u'%s/%s' % (self.author, self.name)
+    def get_for_full_name(self, full_name):
+        """
+        Returns Module for the given full name, e.g., 'puppetlabs/stdlib'.
+        """
+        parsed = self.parse_full_name(full_name)
+        if parsed:
+            author, name = parsed
+            return self.get(author__name=author, name=name)
+        else:
+            raise self.model.DoesNotExist
 
-    @classmethod
-    def parse_full_name(cls, full_name):
+    def parse_full_name(self, full_name):
         """
         Return the module components given a full module name, or None.
         """
@@ -39,17 +53,46 @@ class Module(models.Model):
         else:
             return None
 
+
+class Module(models.Model):
+    author = models.ForeignKey(Author)
+    name = models.CharField(max_length=128, db_index=True)
+    desc = models.TextField(db_index=True, blank=True)
+    tags = models.TextField(db_index=True, blank=True)
+
+    objects = ModuleManager()
+
+    class Meta:
+        unique_together = ('author', 'name')
+
+    def __unicode__(self):
+        return self.canonical_name
+
+    @classmethod
+    def parse_full_name(cls, full_name):
+        """
+        Return the module components given a full module name, or None.
+        """
+        warnings.warn('This classmethod is deprecated, please use the '
+                      'manager method instead.', DeprecationWarning)
+        return cls.objects.parse_full_name(full_name)
+
     @classmethod
     def get_for_full_name(cls, full_name):
         """
         Returns Module for the given full name, e.g., 'puppetlabs/stdlib'.
         """
-        parsed = Module.parse_full_name(full_name)
-        if parsed:
-            author, name = parsed
-            return Module.objects.get(author__name=author, name=name)
-        else:
-            raise Module.DoesNotExist
+        warnings.warn('This classmethod is deprecated, please use the '
+                      'manager method instead.', DeprecationWarning)
+        return cls.objects.get_for_full_name(full_name)
+
+    @property
+    def canonical_name(self):
+        return u'%s-%s' % (self.author.name, self.name)
+
+    @property
+    def legacy_name(self):
+        return u'%s/%s' % (self.author.name, self.name)
 
     @property
     def latest_release(self):
@@ -69,6 +112,9 @@ class Module(models.Model):
 
         latest_version = max(releases.keys())
         return releases[latest_version]
+
+    def natural_key(self):
+        return (self.author.name, self.name)
 
     @property
     def tag_list(self):
