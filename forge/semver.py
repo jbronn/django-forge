@@ -41,6 +41,7 @@ class ForgeSpecItem(SpecItem):
 
 class ForgeSpec(Spec):
     re_findall = re.compile(ForgeSpecItem.spec_pattern).findall
+    re_valid = re.compile(r'^%s' % ForgeSpecItem.spec_pattern)
 
     # Regular expression for shorthand semantic version range acceptable
     # by Puppet Modules.
@@ -71,7 +72,7 @@ class ForgeSpec(Spec):
                 ]
         elif ',' in specs_string:
             spec_texts = specs_string.split(',')
-        elif ForgeSpecItem.re_spec.match(specs_string):
+        elif self.re_valid.match(specs_string):
             spec_texts = [''.join(text_group) for text_group in
                           self.re_findall(specs_string)]
         else:
