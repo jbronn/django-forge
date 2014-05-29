@@ -1,8 +1,25 @@
 from django.shortcuts import render
 
-from .json import error_response, json_response
+from .utils import json_response
 from ..dependency import release_dependencies
 from ..models import Module, Release
+
+
+def error_response(errors, **kwargs):
+    """
+    Returns an error response, for v1 Forge API.
+    """
+    kwargs.setdefault('status', 400)
+    # The Puppet Forge sometimes returns it's errors in one of two ways,
+    # as a list:
+    #   {"errors": [ "<msg1>" ... "<msgN>" ]}
+    # Or as a single element:
+    #   {"error": "<msg>"}
+    if isinstance(errors, (list, tuple)):
+        key = 'errors'
+    else:
+        key = 'error'
+    return json_response({key: errors}, **kwargs)
 
 
 def module_dict(module):
@@ -48,7 +65,7 @@ def modules_json(request):
 
     if query:
         # Client has provided a search query..
-        parsed = Module.parse_full_name(query)
+        parsed = Module.objects.parse_full_name(query)
         if parsed:
             # If query looks like a module name, try and get it.
             author, name = parsed
@@ -81,12 +98,12 @@ def releases_json(request):
     if not full_name:
         return error_response(['Parameter module is required'])
 
-    parsed = Module.parse_full_name(full_name)
+    parsed = Module.objects.parse_full_name(full_name)
     if not parsed:
         return error_response(['Invalid module name'])
 
     try:
-        module = Module.get_for_full_name(full_name)
+        module = Module.objects.get_for_full_name(full_name)
     except Module.DoesNotExist:
         return error_response('Module %s not found' % full_name, status=410)
 
@@ -103,4 +120,4 @@ def releases_json(request):
     try:
         return json_response(release_dependencies(release))
     except Exception as e:
-        return error_response([e.message], status=410)
+        return error_response([e], status=410)
