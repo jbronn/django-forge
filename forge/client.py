@@ -10,7 +10,7 @@ from . import constants
 
 class ForgeClient(object):
 
-    def __init__(self, api_url=PUPPETLABS_FORGE_API_URL,
+    def __init__(self, api_url=constants.PUPPETLABS_FORGE_API_URL,
                  api_version=3, agent_type=None):
         """
         TODO
