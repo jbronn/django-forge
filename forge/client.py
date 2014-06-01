@@ -16,7 +16,7 @@ logger = logging.getLogger('forge.client')
 class ForgeClient(object):
 
     def __init__(self, api_url=constants.PUPPETLABS_FORGE_API_URL,
-                 api_version=3, agent_type=None):
+                 api_version=3, agent_type=None, verify=True):
         """
         This is an object that acts as client for the Forge according
         to the given parameters.
@@ -29,10 +29,11 @@ class ForgeClient(object):
         logger.info('setting client user agent to %s' % user_agent)
         self.user_agent = user_agent
         self.api_url = urlparse.urljoin(api_url, 'v%d/' % api_version)
+        self.verify = verify
 
     def get(self, url, **headers):
         headers.setdefault('User-Agent', self.user_agent)
-        return requests.get(url, headers=headers)
+        return requests.get(url, headers=headers, verify=self.verify)
 
 
 class ForgeAPI(object):
