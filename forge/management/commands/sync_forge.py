@@ -35,14 +35,15 @@ class Command(BaseCommand):
             action='store_true',
             dest='quiet',
             default=False,
-            help=("Silence all output (sets verbosity to 0)."),
+            help=('Silence all output (sets verbosity to 0).'),
         ),
         make_option(
             '-t', '--throttle',
-            action='store_true',
-            dest='quiet',
-            default=False,
-            help=("Silence all output (sets verbosity to 0)."),
+            action='store',
+            dest='throttle',
+            default=0.5,
+            type='float',
+            help=('Time (in seconds) to wait between API requests.'),
         ),
     )
 
@@ -52,7 +53,8 @@ class Command(BaseCommand):
         else:
             self.verbosity = int(options['verbosity'])
 
-        self.client = ForgeClient(api_url=options['api_url'])
+        self.client = ForgeClient(api_url=options['api_url'],
+                                  throttle=options['throttle'])
 
         # Sync authors first, then modules, and finally create releases
         # after downloading the module tarballs.
