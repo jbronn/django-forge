@@ -88,11 +88,11 @@ class Module(models.Model):
 
     @property
     def canonical_name(self):
-        return u'%s-%s' % (self.author.name, self.name)
+        return u'%s-%s' % (self.author.name.lower(), self.name.lower())
 
     @property
     def legacy_name(self):
-        return u'%s/%s' % (self.author.name, self.name)
+        return u'%s/%s' % (self.author.name.lower(), self.name.lower())
 
     @property
     def latest_release(self):
