@@ -153,7 +153,13 @@ class Release(models.Model):
 
             metadata = tf.extractfile(metadata_ti.name).read()
 
-        return metadata
+        for encoding in ('utf-8', 'latin-1'):
+            try:
+                return metadata.decode(encoding)
+            except UnicodeDecodeError:
+                continue
+
+        raise Exception("Can't find an encoding for metadata.json")
 
     @property
     def metadata(self):
