@@ -31,15 +31,19 @@ class ForgeClient(object):
         self.api_url = urlparse.urljoin(api_url, 'v%d/' % api_version)
         self.verify = verify
 
-    def get(self, url, **headers):
-        headers.setdefault('User-Agent', self.user_agent)
-        return requests.get(url, headers=headers, verify=self.verify)
+    def get(self, url, **kwargs):
+        kwargs.setdefault('verify', self.verify)
+        kwargs.setdefault('headers', {'User-Agent': self.user_agent})
+        return requests.get(url, **kwargs)
 
 
 class ForgeAPI(object):
-    def __init__(self, client, endpoint, limit=20, query=None, throttle=0):
+    def __init__(self, endpoint, client=None, limit=20, query=None, throttle=0):
         # Setting instance variables.
-        self.client = client
+        if client is None:
+            self.client = ForgeClient()
+        else:
+            self.client = client
         self.endpoint = endpoint
         self.limit = limit
         self.throttle = throttle
