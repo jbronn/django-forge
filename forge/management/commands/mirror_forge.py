@@ -22,9 +22,9 @@ class Command(BaseCommand):
             '--url',
             action='store',
             dest='url',
-            default=constants.PUPPET_FORGE,
+            default=constants.PUPPETLABS_FORGE_URL,
             help=("Puppet Forge URL to mirror, defaults to: %s." %
-                  constants.PUPPET_FORGE),
+                  constants.PUPPETLABS_FORGE_URL),
         ),
         make_option(
             '--modules-json',
