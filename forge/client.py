@@ -16,10 +16,11 @@ logger = logging.getLogger('forge.client')
 class ForgeClient(object):
 
     def __init__(self, api_url=constants.PUPPETLABS_FORGE_API_URL,
-                 api_version=3, agent_type=None, verify=True):
+                 api_version=3, agent_type=None,
+                 throttle=0, verify=True):
         """
-        This is an object that acts as client for the Forge according
-        to the given parameters.
+        This object handles all HTTP requests to the Forge API specfied
+        according to the given parameters.
         """
         # Use of Puppet Labs' forge requires a user agent:
         #  https://forgeapi.puppetlabs.com/#user-agent-required
@@ -29,16 +30,23 @@ class ForgeClient(object):
         logger.info('setting client user agent to %s' % user_agent)
         self.user_agent = user_agent
         self.api_url = urlparse.urljoin(api_url, 'v%d/' % api_version)
+        self.throttle = throttle
         self.verify = verify
 
     def get(self, url, **kwargs):
         kwargs.setdefault('verify', self.verify)
         kwargs.setdefault('headers', {'User-Agent': self.user_agent})
+        if self.throttle:
+            time.sleep(self.throttle)
         return requests.get(url, **kwargs)
 
 
 class ForgeAPI(object):
-    def __init__(self, endpoint, client=None, limit=20, query=None, throttle=0):
+    def __init__(self, endpoint, client=None, limit=20, query=None):
+        """
+        This creates iterable abstraction for the results from the
+        given Forge API endpoint.
+        """
         # Setting instance variables.
         if client is None:
             self.client = ForgeClient()
@@ -46,7 +54,6 @@ class ForgeAPI(object):
             self.client = client
         self.endpoint = endpoint
         self.limit = limit
-        self.throttle = throttle
         self.query = query or {}
 
         # Joining the client's API URL with that of the given endpoint.
@@ -62,8 +69,6 @@ class ForgeAPI(object):
         query = self.query.copy()
         for idx in xrange(len(self)):
             if idx >= len(self.results):
-                if self.throttle:
-                    time.sleep(self.throttle)
                 query['offset'] = idx
                 data = self.request(self.url(**query))
                 self.results.extend(data['results'])
