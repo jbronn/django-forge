@@ -28,14 +28,21 @@ def module_dict(module):
     given module.
     """
     latest = module.latest_release
-    versions = [release.version for release in module.releases.all()]
-    versions.sort(reverse=True)
-    metadata = latest.metadata
+    if latest:
+        latest_version = str(latest.version)
+        versions = [release.version for release in module.releases.all()]
+        versions.sort(reverse=True)
+        metadata = latest.metadata
+    else:
+        latest_version = ''
+        versions = []
+        metadata = {}
+
     return {
         'name': module.name,
         'author': module.author.name,
-        'version': str(latest.version),
-        'full_name': str(module),
+        'version': latest_version,
+        'full_name': module.legacy_name,
         'desc': module.desc,
         'project_url': metadata.get('project_page', ''),
         'releases': [{'version': str(version)} for version in versions],
