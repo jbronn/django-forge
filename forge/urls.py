@@ -3,7 +3,7 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 
 from . import views
-from .views import v1
+from .views import v1, v3
 
 admin.autodiscover()
 
@@ -18,6 +18,8 @@ urlpatterns = patterns('',
         v1.releases_json, name='releases_json_v1'),
     url(r'^(?P<author>\w+)/(?P<module_name>\w+)\.json$',
         v1.module_json, name='module_json_v1'),
+    url(r'^v3/modules$', v3.modules, name='modules_v3'),
+    url(r'^v3/releases$', v3.releases, name='releases_v3'),
 )
 
 if settings.DEBUG:
