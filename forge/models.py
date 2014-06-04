@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import tarfile
@@ -137,6 +138,19 @@ class Release(models.Model):
 
     def __unicode__(self):
         return u'%s version %s' % (self.module, self.version)
+
+    @property
+    def file_md5(self):
+        # TODO: This will become an actual database field.
+        self.tarball.open()
+        file_md5 = hashlib.md5()
+        file_md5.update(self.tarball.read())
+        self.tarball.close()
+        return file_md5.hexdigest()
+
+    @property
+    def file_size(self):
+        return self.tarball.size
 
     @property
     def metadata_json(self):
