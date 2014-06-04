@@ -25,7 +25,7 @@ urlpatterns = patterns('',
 if settings.DEBUG:
     urlpatterns += patterns('',
         url(r'^%s(?P<path>.*)$' % settings.MEDIA_URL[1:],
-            'django.views.static.serve', {
+            'forge.views.static.serve', {
             'document_root': settings.MEDIA_ROOT,
         }),
    )
