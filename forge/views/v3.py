@@ -8,9 +8,11 @@ from .utils import json_response
 from ..models import Author, Module, Release
 
 
+## Helper methods
+
 def error_response(errors, **kwargs):
     """
-    Returns an error response, for v3 Forge API.
+    Returns an error response for v3 Forge API.
     """
     error_dict = {'errors': errors}
     if 'message' in kwargs:
@@ -21,13 +23,33 @@ def error_response(errors, **kwargs):
     )
 
 
+def query_dict(request):
+    """
+    Returns query dictionary initialized with common parameters to v3 views.
+    """
+    try:
+        limit = int(request.GET.get('limit', 20))
+    except ValueError:
+        limit = 20
+
+    try:
+        offset = int(request.GET.get('offset', 0))
+    except ValueError:
+        offset = 0
+
+    return {
+        'limit': limit,
+        'offset': offset,
+    }
+
+
 def pagination_data(qs, query, url_name):
     """
     Returns a two-tuple comprising a Page and dictionary of pagination data
-    corresponding to the given queryset, query dictionary, and URL name.
+    corresponding to the given queryset, query parameters, and URL name.
     """
-    limit = query.get('limit', 20)
-    offset = query.get('offset', 0)
+    limit = query['limit']
+    offset = query['offset']
 
     p = Paginator(qs, limit)
     page_num = (offset / p.per_page) + 1
@@ -73,63 +95,79 @@ def pagination_data(qs, query, url_name):
     return page, pagination_dict
 
 
+## API views
+
 def modules(request):
-    pass
+    """
+    Provides the `/v3/modules` API endpoint.
+    """
+    query = query_dict(request)
+
+    q = request.GET.get('query', None)
+    if q:
+        # Client has provided a search query..
+        query['query'] = q
+
+        parsed = Module.objects.parse_full_name(q)
+        if parsed:
+            # If query looks like a module name, try and get it.
+            author, name = parsed
+            qs = Module.objects.filter(author__name=author, name=name)
+        else:
+            # Otherwise we search other fields.
+            qs = (
+                Module.objects.filter(name__icontains=q) |
+                Module.objects.filter(author__name__icontains=q) |
+                Module.objects.filter(releases__version__icontains=q) |
+                Module.objects.filter(tags__icontains=q) |
+                Module.objects.filter(desc__icontains=q)
+            )
+    else:
+        qs = Module.objects.all()
+
+    # Ensure only distinct records are returned.
+    qs = qs.order_by('author__name').distinct()
+
+    # Get pagination page and data.
+    page, pagination_dict = pagination_data(qs, query, 'modules_v3')
+
+    modules_data = {
+        'pagination': pagination_dict,
+        'results': [module.v3 for module in page.object_list],
+    }
+
+    return json_response(modules_data, indent=2)
 
 
 def releases(request):
     """
     Provides the `/v3/releases` API endpoint.
     """
+    query = query_dict(request)
     qs = Release.objects.all()
-
-    try:
-        limit = int(request.GET.get('limit', 20))
-    except ValueError:
-        limit = 20
-
-    try:
-        offset = int(request.GET.get('offset', 0))
-    except ValueError:
-        offset = 0
-
-    query = {
-        'limit': limit,
-        'offset': offset,
-    }
 
     module_name = request.GET.get('module', None)
     if module_name:
         query['module'] = module_name
-        try:
-            qs = qs.filter(
-                module=Module.objects.get_for_full_name(module_name)
+        if Module.objects.parse_full_name(module_name):
+            try:
+                qs = qs.filter(
+                    module=Module.objects.get_for_full_name(module_name)
+                )
+            except Module.DoesNotExist:
+                qs = qs.none()
+        else:
+            return error_response(
+                ["'%s' is not a valid full modulename" % module_name]
             )
-        except Module.DoesNotExist:
-            qs = qs.none()
 
     # Get pagination page and data.
     page, pagination_dict = pagination_data(qs, query, 'releases_v3')
 
-    releases = []
-    for release in page.object_list:
-        releases.append({
-            'module': {
-                'name': release.module.name.lower(),
-                'owner': {
-                    'name': release.module.author.name.lower(),
-                }
-            },
-            'metadata': release.metadata,
-            'version': str(release.version),
-            'file_uri': release.tarball.url,
-            'file_size': release.file_size,
-            'file_md5': release.file_md5,
-        })
-
+    # Constructing releases_data dictionary for serialization.
     releases_data = {
         'pagination': pagination_dict,
-        'results': releases,
+        'results': [rel.v3 for rel in page.object_list],
     }
 
     return json_response(releases_data, indent=2)
