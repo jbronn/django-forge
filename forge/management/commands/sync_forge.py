@@ -1,5 +1,5 @@
 import hashlib
-import json
+import logging
 import os
 import sys
 import urllib
@@ -8,12 +8,15 @@ from contextlib import closing
 from optparse import make_option
 
 from django.conf import settings
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand
 from django.db.models import Count
 
 from forge import constants
 from forge.client import ForgeAPI, ForgeClient
 from forge.models import Author, Module, Release
+
+
+logger = logging.getLogger('forge.sync')
 
 
 class Command(BaseCommand):
@@ -62,6 +65,14 @@ class Command(BaseCommand):
         self.sync_modules()
         self.sync_releases()
 
+    def log(self, msg, error=False, verbosity_level=1):
+        if error:
+            logger.error(msg)
+        else:
+            logger.info(msg)
+        if self.verbosity >= verbosity_level:
+            sys.stdout.write('%s\n' % msg)
+
     def sync_authors(self):
         self.users_api = ForgeAPI('users', client=self.client)
 
@@ -70,8 +81,8 @@ class Command(BaseCommand):
                 author, created = Author.objects.get_or_create(
                     name=user['username']
                 )
-                if created and self.verbosity:
-                    sys.stdout.write('Created Author: %s\n' % author)
+                if created:
+                    self.log('Created Author: %s' % author)
 
     def sync_modules(self):
         self.modules_api = ForgeAPI('modules', client=self.client)
@@ -81,34 +92,40 @@ class Command(BaseCommand):
                 author=Author.objects.get_by_natural_key(mod['owner']['username']),
                 name=mod['name']
             )
-            if self.verbosity and created:
-                sys.stdout.write('Created Module: %s\n' % module)
+            if created:
+                msg = 'Created Module: %s' % module
+                self.log(msg)
 
             desc = mod['current_release']['metadata'].get('description', '')
             tags = ' '.join(mod['current_release']['tags'])
 
             if tags != module.tags or desc != module.desc:
-                if not created and self.verbosity >= 2:
+                if not created:
                     if tags != module.tags:
-                        sys.stdout.write(' Tags Differ:\n')
-                        sys.stdout.write('  Old: %s\n' % module.tags)
-                        sys.stdout.write('  New: %s\n' % tags)
+                        self.log(
+                            '\n'.join(
+                                [' Tags Differ:',
+                                 '  Old: %s' % module.tags,
+                                 '  New: %s' % tags]),
+                            verbosity_level=2
+                        )
 
                     if desc != module.desc:
-                        sys.stdout.write(' Descriptions Differ:\n')
-                        sys.stdout.write('  Old: %s\n' % module.desc)
-                        sys.stdout.write('  New: %s\n' % desc)
+                        self.log(
+                            '\n'.join(
+                                [' Descriptions Differ:',
+                                 '  Old: %s' % module.desc,
+                                 '  New: %s' % desc]),
+                            verbosity_level=2
+                        )
 
                 module.tags = tags
                 module.desc = desc
                 module.save()
 
-                if self.verbosity and not created:
-                    sys.stdout.write('Updated Module: %s\n' % module)
+                if not created:
+                    self.log('Updated Module: %s' % module)
 
-        if not DEBUG:
-            with open('/Users/justin/jbronn/django-forge/test/modules_api.pickle', 'wb') as fh:
-                fh.write(pickle.dumps(self.modules_api))
 
     def sync_releases(self):
         # Only synchronize releases from authors that have released at least
@@ -122,9 +139,11 @@ class Command(BaseCommand):
             author_name = author.name.lower()
             alpha = author_name[0].lower()
 
-            releases_api = ForgeAPI('releases', client=self.client,
-                                    query={'owner': author_name,
-                                           'sort_by': 'release_date'})
+            releases_api = ForgeAPI(
+                'releases', client=self.client,
+                query={'owner': author_name,
+                       'sort_by': 'release_date'}
+            )
 
             for rel in releases_api:
                 tarball = os.path.basename(rel['file_uri'])
@@ -154,28 +173,30 @@ class Command(BaseCommand):
 
                     if file_md5.hexdigest() == rel['file_md5']:
                         os.rename(destination_tmp, destination)
+                        self.log('Downloaded Release: %s' % tarball)
                     else:
-                        if self.verbosity:
-                            sys.stdout.write('Downloaded corrupt data from: %s\n' % tarball_url)
+                        os.remove(destination_tmp)
+                        self.log(
+                            'Downloaded corrupt data from: %s' % tarball_url,
+                            error=True
+                        )
                         continue
 
-                    if self.verbosity:
-                        sys.stdout.write('Downloaded Release: %s\n' % tarball)
-
                 # Get corresponding module.
-                module = Module.objects.get(author=author,
-                                            name=rel['module']['name'])
+                module = Module.objects.get(
+                    author=author, name=rel['module']['name']
+                )
 
                 # Creating Release now download is completed.
                 try:
                     release, created = Release.objects.get_or_create(
                         module=module, version=rel['version'], tarball=upload_to
                     )
-                    if created and self.verbosity:
-                        sys.stdout.write('Created Release: %s\n' % release)
+                    if created:
+                        self.log('Created Release: %s' % release)
                 except Exception as e:
-                    if self.verbosity:
-                        sys.stdout.write(
-                            'Could not create release for: %s version %s\n' %
-                            (module, rel['version'])
-                        )
+                    err_msg = (
+                        'Could not create release for: %s version %s\n' %
+                        (module, rel['version'])
+                    )
+                    self.log(err_msg, error=True)

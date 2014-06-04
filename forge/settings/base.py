@@ -39,3 +39,43 @@ INSTALLED_APPS = (
 )
 
 ALLOWED_HOSTS = ['*']
+
+## Logging configuration
+
+# Directory where forge's logs are written to.
+FORGE_LOGS = os.environ.get('FORGE_LOGS', FORGE_ROOT)
+FORGE_LOG = os.path.join(FORGE_LOGS, 'forge.log')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'default': {
+            'format': '%(asctime)s %(levelname)s %(name)s %(message)s',
+        },
+    },
+    'handlers': {
+        'logfile': {
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': FORGE_LOG,
+            'formatter': 'default',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['logfile'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['logfile'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'forge': {
+            'handlers': ['logfile'],
+            'level': 'INFO',
+            'propagate': True,
+        }
+    }
+}
