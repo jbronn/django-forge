@@ -13,7 +13,7 @@ from .storage import ForgeStorage
 
 class AuthorManager(models.Manager):
     def get_by_natural_key(self, name):
-        return self.get(name=name)
+        return self.get(name__iexact=name)
 
 
 class Author(models.Model):
@@ -37,7 +37,7 @@ class Author(models.Model):
 class ModuleManager(models.Manager):
     def get_by_natural_key(self, author, name):
         return self.get(author=Author.objects.get_by_natural_key(author),
-                        name=name)
+                        name__iexact=name)
 
     def get_for_full_name(self, full_name):
         """
@@ -46,7 +46,7 @@ class ModuleManager(models.Manager):
         parsed = self.parse_full_name(full_name)
         if parsed:
             author, name = parsed
-            return self.get(author__name=author, name=name)
+            return self.get(author__name__iexact=author, name=name)
         else:
             raise self.model.DoesNotExist
 
