@@ -1,5 +1,3 @@
-from django.shortcuts import render
-
 from .utils import json_response
 from ..dependency import release_dependencies
 from ..models import Module, Release

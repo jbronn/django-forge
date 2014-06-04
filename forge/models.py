@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import tarfile
@@ -25,6 +26,12 @@ class Author(models.Model):
 
     def natural_key(self):
         return (self.name,)
+
+    @property
+    def v3(self):
+        return {
+            'username': self.name.lower(),
+        }
 
 
 class ModuleManager(models.Manager):
@@ -120,6 +127,25 @@ class Module(models.Model):
     def tag_list(self):
         return self.tags.split()
 
+    @property
+    def v3_base(self):
+        return {
+            'name': self.name.lower(),
+            'owner': self.author.v3,
+        }
+
+    @property
+    def v3(self):
+        v3_data = self.v3_base
+        current_release = self.latest_release
+        if current_release:
+            current_release = current_release.v3
+            v3_data.update({
+                'current_release': current_release,
+                'homepage_url': current_release['metadata'].get('project_page', ''),
+            })
+        return v3_data
+
 
 def tarball_upload(instance, filename):
     author = instance.module.author.name
@@ -137,6 +163,19 @@ class Release(models.Model):
 
     def __unicode__(self):
         return u'%s version %s' % (self.module, self.version)
+
+    @property
+    def file_md5(self):
+        # TODO: This will become an actual database field.
+        self.tarball.open()
+        file_md5 = hashlib.md5()
+        file_md5.update(self.tarball.read())
+        self.tarball.close()
+        return file_md5.hexdigest()
+
+    @property
+    def file_size(self):
+        return self.tarball.size
 
     @property
     def metadata_json(self):
@@ -164,3 +203,15 @@ class Release(models.Model):
     @property
     def metadata(self):
         return json.loads(self.metadata_json)
+
+    @property
+    def v3(self):
+        return {
+            'file_md5': self.file_md5,
+            'file_size': self.file_size,
+            'file_uri': self.tarball.url,
+            'metadata': self.metadata,
+            'module': self.module.v3_base,
+            'tags': self.module.tag_list,
+            'version': str(self.version),
+        }
