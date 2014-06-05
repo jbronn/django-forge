@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 setup(name='django-forge',
@@ -13,10 +13,7 @@ setup(name='django-forge',
         'requests>=2',
         'semantic_version>=2.1.2',
       ],
-      packages=['forge',
-                'forge/management',
-                'forge/management/commands',
-                'forge/tests',],
+      packages=find_packages(),
       package_data={'apache': ['forge/apache'],
                     'templates': ['forge/templates']},
       include_package_data=True,

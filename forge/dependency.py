@@ -1,8 +1,11 @@
+import logging
 from collections import defaultdict
 
 from .models import Module, Release
 from .semver import ForgeSpec
 
+
+logger = logging.getLogger('forge.dependency')
 
 def release_specs(release):
     """
@@ -80,6 +83,7 @@ def release_dependencies(release):
     """
     This determines the dependencies for the given module release.
     """
+    logger.info('Calculating dependencies for %s' % release)
     dependency_specs, spec_cache = calculate_dependencies(release)
     dependencies = defaultdict(list)
 
