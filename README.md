@@ -32,12 +32,22 @@ Background
 
 The Puppet Forge (https://forge.puppetlabs.com/) is a central authority for
 finding and installing Puppet modules.  This package implements the first
-version (v1) of the JSON web services necessary to house (or mirror) a
-private, stand-alone version of the Forge.
+version (v1) and third version (v3) of the JSON web services necessary to house
+(or mirror) a private, stand-alone version of the Forge.
 
-The Puppet Forge "standard" is undocumented, and the resources here were
+
+Simplicity and ease-of-use are goals of this package.
+
+### v1
+
+This version of the Puppet Forge is undocumented, and the resources here were
 reverse-engineered from the behavior of the current API endpoints (which
 are buried in the Puppet module tool source code).  Care is taken to
-try and imitate the behavior of the Forge whenever possible.
+try and imitate the behavior of this API whenever possible.
 
-Simplicity and ease-of-use are the goals of this package.
+### v3
+
+Puppet Labs fully documented and shared the v3 standard with the community,
+see https://forgeapi.puppetlabs.com for further details.  This package
+only implements the subset of this API necessary to talk to open source
+Puppet 3.6+ clients.
