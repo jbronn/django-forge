@@ -9,7 +9,7 @@ setup(name='django-forge',
       url='https://github.com/jbronn/django-forge',
       download_url='http://pypi.python.org/pypi/django-forge/',
       install_requires=[
-        'Django>=1.4',
+        'Django>=1.8',
         'requests>=2',
         'semantic_version>=2.1.2',
       ],
