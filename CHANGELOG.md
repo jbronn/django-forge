@@ -1,3 +1,7 @@
+## 0.7.0 (August 19, 2015)
+
+This release adds compatibility for Django 1.8, which is now required.
+
 ## 0.6.0 (June 4, 2014)
 
 This is the first version of django-forge that provides v3 API support.
