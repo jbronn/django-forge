@@ -1,6 +1,9 @@
-## 0.7.0 (August 19, 2015)
+## 0.7.1 (August 19, 2015)
 
 This release adds compatibility for Django 1.8, which is now required.
+
+The 0.7.0 version packages were pushed accidentally to the 0.6.0 release on
+PyPI, forcing me to issue an incremented version.
 
 ## 0.6.0 (June 4, 2014)
 
