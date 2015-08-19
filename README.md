@@ -10,7 +10,7 @@ the Puppet Forge:
     $ virtualenv forge
     $ source forge/bin/activate
     $ pip install django-forge
-    $ django-admin.py syncdb --noinput --settings=forge.settings.dev
+    $ django-admin.py migrate --noinput --settings=forge.settings.dev
     $ django-admin.py sync_forge --settings=forge.settings.dev
     $ django-admin.py runserver --settings=forge.settings.dev
 
